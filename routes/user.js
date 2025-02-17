@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
 
-userRouter.post("/signup", function (req, res) {
+userRouter.post("/signup", async function (req, res) {
   const requiredBody = z.object({
     email: z.string().min(3).max(50).email(),
     password: z
@@ -35,6 +35,25 @@ userRouter.post("/signup", function (req, res) {
   }
 
   const { email, password, firstName, lastName } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 5);
+
+    await userModel.create({
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+    });
+  } catch (e) {
+    if (e.code === 11000) {
+      res.status(409).json({ message: "User already exists" });
+      return;
+    } else {
+      res.status(500).json({ message: "An error occurred during sign-up" });
+      return;
+    }
+  }
 
   res.json({
     message: "You have signed up",

@@ -8,6 +8,7 @@ const { adminRouter } = require("./routes/admin");
 const JWT_SECRET = "hahahahahuhuhuhu";
 
 const app = express();
+app.use(express.json());
 
 app.use("/api/v1/user", userRouter); // if a request comes to /user it gets routed to userRouter
 app.use("/api/v1/course", courseRouter); // if a request comes to /user it gets routed to courseRouter
@@ -19,3 +20,5 @@ async function main() {
   );
   app.listen(3000);
 }
+
+main();
