@@ -6,32 +6,87 @@ const adminRouter = Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
-const JWT_SECRET = "hahahahahuhuhuhu";
+const JWT_ADMIN_PASSWORD = "hahahahahuhuhuhu";
 
 adminRouter.post("/signup", async function (req, res) {
-  const email = req.body.email;
-  const password = req.body.password;
-  const firstName = req.body.firstName;
-  const lastName = req.body.lastName;
+  const requiredBody = z.object({
+    email: z.string().min(3).max(50).email(),
+    password: z
+      .string()
+      .min(3, "Password must be at least 3 characters long")
+      .max(30, "Password cannot exceed 30 characters")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/\d/, "Password must contain at least one number")
+      .regex(
+        /[@$!%*?&]/,
+        "Password must contain at least one special character (@$!%*?&)"
+      ),
+    firstName: z.string().min(3).max(50),
+    lastName: z.string().min(3).max(50),
+  });
+
+  const parsedDataWithSuccess = requiredBody.safeParse(req.body);
+
+  if (!parsedDataWithSuccess.success) {
+    res.json({
+      message: "Incorrect Format",
+      error: parsedDataWithSuccess.error,
+    });
+    return;
+  }
+
+  const { email, password, firstName, lastName } = req.body;
 
   try {
+    const hashedPassword = await bcrypt.hash(password, 5);
+
     await adminModel.create({
       email,
-      password,
+      password: hashedPassword,
       firstName,
       lastName,
     });
-  } catch (e) {}
+  } catch (e) {
+    if (e.code === 11000) {
+      res.status(409).json({ message: "User already exists" });
+      return;
+    } else {
+      res.status(500).json({ message: "An error occurred during sign-up" });
+      return;
+    }
+  }
 
   res.json({
-    message: "Successfully signed up as an admin",
+    message: "You have signed up",
   });
 });
 
-adminRouter.post("/signin", function (req, res) {
-  res.json({
-    message: "Login successful",
+adminRouter.post("/signin", async function (req, res) {
+  const { email, password } = req.body;
+
+  const admin = await adminModel.findOne({
+    email: email,
   });
+
+  const passwordMatch = await bcrypt.compare(password, admin.password);
+
+  if (passwordMatch) {
+    const token = jwt.sign(
+      {
+        id: admin._id,
+      },
+      JWT_ADMIN_PASSWORD
+    );
+
+    res.json({
+      token: token,
+    });
+  } else {
+    res.status(403).json({
+      message: "Incorrect credentials",
+    });
+  }
 });
 
 adminRouter.post("/course", function (req, res) {

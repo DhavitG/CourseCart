@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
 
+const JWT_USER_PASSWORD = "gagagagagugugugu";
+
 userRouter.post("/signup", async function (req, res) {
   const requiredBody = z.object({
     email: z.string().min(3).max(50).email(),
@@ -60,10 +62,31 @@ userRouter.post("/signup", async function (req, res) {
   });
 });
 
-userRouter.post("/signin", function (req, res) {
-  res.json({
-    message: "You have signed in",
+userRouter.post("/signin", async function (req, res) {
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({
+    email: email,
   });
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+
+  if (passwordMatch) {
+    const token = jwt.sign(
+      {
+        id: user._id,
+      },
+      JWT_USER_PASSWORD
+    );
+
+    res.json({
+      token: token,
+    });
+  } else {
+    res.status(403).json({
+      message: "Incorrect credentials",
+    });
+  }
 });
 
 userRouter.get("/purchases", function (req, res) {});
