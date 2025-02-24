@@ -1,12 +1,11 @@
 const { Router } = require("express");
+const { JWT_USER_PASSWORD } = require("../config");
 
 const userRouter = Router();
 const { userModel } = require("../db");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
-
-const JWT_USER_PASSWORD = "gagagagagugugugu";
 
 userRouter.post("/signup", async function (req, res) {
   const requiredBody = z.object({
