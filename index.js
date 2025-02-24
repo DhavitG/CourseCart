@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 
@@ -13,9 +15,7 @@ app.use("/api/v1/course", courseRouter); // if a request comes to /user it gets 
 app.use("/api/v1/admin", adminRouter); // if a request comes to /user it gets routed to adminRouter
 
 async function main() {
-  await mongoose.connect(
-    "mongodb+srv://dhavitg:ZRFpS2dtZt%21GSDV@cluster0.rhpde.mongodb.net/CourseCart"
-  );
+  await mongoose.connect(process.env.MONGO_URL);
   app.listen(3000);
 }
 
