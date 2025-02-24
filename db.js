@@ -15,7 +15,7 @@ const courseSchema = new Schema({
   description: String,
   price: Number,
   imageUrl: String,
-  creator: ObjectId,
+  creatorId: ObjectId,
 });
 
 const adminSchema = new Schema({

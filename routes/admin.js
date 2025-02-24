@@ -93,14 +93,14 @@ adminRouter.post("/signin", async function (req, res) {
 adminRouter.post("/course", adminMiddleware, async function (req, res) {
   const adminId = req.userId;
 
-  const { title, description, price, imageUrl, creator } = req.body;
+  const { title, description, price, imageUrl } = req.body;
 
   const course = await courseModel.create({
     title,
     description,
     price,
     imageUrl,
-    creator: adminId,
+    creatorId: adminId,
   });
 
   res.json({
@@ -109,15 +109,37 @@ adminRouter.post("/course", adminMiddleware, async function (req, res) {
   });
 });
 
-adminRouter.put("/course", function (req, res) {
+adminRouter.put("/course", adminMiddleware, async function (req, res) {
+  const adminId = req.userId;
+
+  const { title, description, price, imageUrl, courseId } = req.body;
+
+  const course = await courseModel.updateOne(
+    {
+      _id: courseId,
+      creatorId: adminId, // security check
+    },
+    {
+      title,
+      description,
+      price,
+      imageUrl,
+      creatorId: adminId,
+    }
+  );
   res.json({
     message: "Course edited successfully",
   });
 });
 
-adminRouter.get("/course/bulk", function (req, res) {
+adminRouter.get("/course/bulk", async function (req, res) {
+  const adminId = req.userId;
+  const courses = await courseModel.find({
+    creatorId: adminId, // security check
+  });
   res.json({
     message: "All courses",
+    courses,
   });
 });
 
