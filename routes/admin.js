@@ -1,4 +1,6 @@
-const { adminModel } = require("../db");
+const { adminModel, courseModel } = require("../db");
+const { JWT_ADMIN_PASSWORD } = require("../config");
+const { adminMiddleware } = require("../middlewares/admin");
 
 const { Router } = require("express");
 const adminRouter = Router();
@@ -6,7 +8,6 @@ const adminRouter = Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { z } = require("zod");
-const JWT_ADMIN_PASSWORD = "hahahahahuhuhuhu";
 
 adminRouter.post("/signup", async function (req, res) {
   const requiredBody = z.object({
@@ -89,9 +90,22 @@ adminRouter.post("/signin", async function (req, res) {
   }
 });
 
-adminRouter.post("/course", function (req, res) {
+adminRouter.post("/course", adminMiddleware, async function (req, res) {
+  const adminId = req.userId;
+
+  const { title, description, price, imageUrl, creator } = req.body;
+
+  const course = await courseModel.create({
+    title,
+    description,
+    price,
+    imageUrl,
+    creator: adminId,
+  });
+
   res.json({
-    message: "Course added successfully",
+    message: "Course created",
+    courseId: course._id,
   });
 });
 
